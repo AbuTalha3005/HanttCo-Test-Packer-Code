@@ -1,0 +1,65 @@
+---
+# Ansible Playbook to install, configure, and register NGINX on Windows Server.
+# This playbook downloads the NGINX zip, unzips it, sets up HTTPS with placeholder SSL files,
+# downloads and unzips NSSM, and then registers NGINX as a Windows service.
+
+- name: Configure Windows Server with NGINX and HTTPS
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Download NGINX zip file
+      win_get_url:
+        url: "http://nginx.org/download/nginx-1.22.1.zip"
+        dest: "C:\\nginx.zip"
+
+    - name: Stop existing NGINX service if running
+      win_service:
+        name: nginx
+        state: stopped
+      ignore_errors: yes
+
+    - name: Unzip NGINX to C:\nginx
+      win_unzip:
+        src: "C:\\nginx.zip"
+        dest: "C:\\nginx"
+        remove: yes
+
+    - name: Create directory for SSL files
+      win_file:
+        path: "C:\\nginx\\conf\\ssl"
+        state: directory
+
+    - name: Copy placeholder SSL certificate
+      win_copy:
+        src: "ssl/server.crt"
+        dest: "C:\\nginx\\conf\\ssl\\server.crt"
+
+    - name: Copy placeholder SSL key
+      win_copy:
+        src: "ssl/server.key"
+        dest: "C:\\nginx\\conf\\ssl\\server.key"
+
+    - name: Deploy NGINX configuration with HTTPS enabled
+      win_template:
+        src: "templates/nginx.conf.j2"
+        dest: "C:\\nginx\\conf\\nginx.conf"
+
+    - name: Download NSSM zip file
+      win_get_url:
+        url: "https://nssm.cc/release/nssm-2.24.zip"
+        dest: "C:\\nssm.zip"
+
+    - name: Unzip NSSM to C:\nssm
+      win_unzip:
+        src: "C:\\nssm.zip"
+        dest: "C:\\nssm"
+        remove: yes
+
+    - name: Install NGINX as a Windows Service using NSSM
+      win_command: "C:\\nssm\\nssm-2.24\\win64\\nssm.exe install nginx C:\\nginx\\nginx.exe"
+
+    - name: Set NGINX service to start automatically and start the service
+      win_service:
+        name: nginx
+        start_mode: auto
+        state: started

@@ -1,0 +1,70 @@
+- name: Install and Configure NGINX with HTTPS on Windows Server
+  hosts: all
+  gather_facts: yes
+  tasks:
+
+    - name: Download NGINX zip file
+      win_get_url:
+        url: "http://nginx.org/download/nginx-1.22.1.zip"
+        dest: "C:\\nginx.zip"
+
+    - name: Kill nginx.exe if already running
+      win_shell: |
+        Get-Process nginx -ErrorAction SilentlyContinue | Stop-Process -Force
+      ignore_errors: yes
+
+    - name: Stop existing NGINX service if running
+      win_service:
+        name: nginx
+        state: stopped
+      ignore_errors: yes
+
+    - name: Unzip NGINX to C:\nginx
+      win_unzip:
+        src: "C:\\nginx.zip"
+        dest: "C:\\nginx"
+        remove: yes
+
+    - name: Create directory for SSL files
+      win_file:
+        path: "C:\\nginx\\conf\\ssl"
+        state: directory
+
+    - name: Copy SSL certificate
+      win_copy:
+        src: "ssl/server.crt"
+        dest: "C:\\nginx\\conf\\ssl\\server.crt"
+
+    - name: Copy SSL private key
+      win_copy:
+        src: "ssl/server.key"
+        dest: "C:\\nginx\\conf\\ssl\\server.key"
+
+    - name: Deploy NGINX config with HTTPS
+      win_template:
+        src: "templates/nginx.conf.j2"
+        dest: "C:\\nginx\\conf\\nginx.conf"
+
+    - name: Download NSSM
+      win_get_url:
+        url: "https://nssm.cc/release/nssm-2.24.zip"
+        dest: "C:\\nssm.zip"
+
+    - name: Unzip NSSM to C:\nssm
+      win_unzip:
+        src: "C:\\nssm.zip"
+        dest: "C:\\nssm"
+        remove: yes
+
+    - name: Remove existing NGINX service if any
+      win_command: "sc delete nginx"
+      ignore_errors: yes
+
+    - name: Install NGINX as a service with NSSM
+      win_command: "C:\\nssm\\nssm-2.24\\win64\\nssm.exe install nginx C:\\nginx\\nginx-1.22.1\\nginx.exe"
+
+    - name: Set NGINX service to start automatically and start it
+      win_service:
+        name: nginx
+        start_mode: auto
+        state: started
