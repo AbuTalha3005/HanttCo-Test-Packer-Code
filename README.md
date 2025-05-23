@@ -1,4 +1,4 @@
-![Ec2-Instance-Deployed-Using-Custom-AMI](https://github.com/user-attachments/assets/3b9f73c1-1c12-44f7-a863-5887da42be03)![AWS-Windows-AMI-Created](https://github.com/user-attachments/assets/ebcd8180-f2ce-4412-8421-6fce9b367e65)# Windows NGINX Provisioning on AWS with Packer, Terraform, and Ansible
+# Windows NGINX Provisioning on AWS with Packer, Terraform, and Ansible
 This project automates the creation of a Windows Server AMI with NGINX installed and HTTPS configured using **Packer** and **Ansible**, then deploys that AMI using **Terraform** on AWS.
 
 ## 🧱 Project Structure
